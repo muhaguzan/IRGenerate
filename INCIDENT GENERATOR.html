@@ -1,0 +1,490 @@
+<!-- 2026/08/28 Created by G -->
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Incident Notification & Report Generator</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 20px; background: #f4f6f8; color: #333; }
+    .container { display: flex; gap: 20px; max-width: 1300px; margin: 0 auto; }
+    .form-section, .output-section { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
+    input[type="text"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+    textarea { resize: vertical; height: 70px; }
+    .row { display: flex; gap: 10px; }
+    .row .form-group { flex: 1; }
+    .time-group { display: flex; gap: 6px; align-items: center; }
+    .time-group input[type="text"] { flex: 2; }
+    .time-group select { flex: 1; }
+    
+    /* Attendance styling */
+    .attendance-box { border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa; }
+    .attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .att-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 4px 8px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .att-item select { width: auto; padding: 2px 4px; font-size: 12px; }
+    .custom-att-input { display: flex; gap: 6px; }
+
+    /* Chronology Builder Styling */
+    .chrono-box { border: 1px solid #cbe0ff; background: #eef6ff; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+    .chrono-item { background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+    .chrono-header { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .chrono-header input[type="text"] { width: 110px; font-size: 12px; padding: 4px 6px; }
+    .chrono-header select { font-size: 12px; padding: 4px 6px; }
+    .btn-del-chrono { background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: auto; }
+    .btn-del-chrono:hover { background: #bb2d3b; }
+
+    pre { background: #1e1e1e; color: #fff; padding: 15px; border-radius: 6px; white-space: pre-wrap; font-family: Consolas, monospace; font-size: 13px; overflow-x: auto; }
+    button { background: #0066cc; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+    button:hover { background: #0052a3; }
+    .btn-add { background: #198754; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; }
+    .btn-add:hover { background: #157347; }
+    .checkbox-inline { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-weight: normal; cursor: pointer; }
+    .checkbox-inline input { width: auto; }
+    
+    .monthly-box { background: #eef6ff; border: 1px solid #b6d4fe; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+    .monthly-box label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #084298; }
+    .monthly-box input { width: 16px; height: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="form-section">
+    <h3>Input Incident Details</h3>
+
+    <!-- Checkbox Monthly -->
+    <div class="monthly-box">
+      <label>
+        <input type="checkbox" id="isMonthly"> 
+        <strong>Is Monthly Incident?</strong> (Menambahkan [MTH])
+      </label>
+    </div>
+
+    <div class="row">
+      <div class="form-group" style="flex:1;">
+        <label>Prefix / Category</label>
+        <select id="prefix">
+          <option value="[DTO]">[DTO]</option>
+          <option value="[DVO]">[DVO]</option>
+          <option value="[DLO]" selected>[DLO]</option>
+          <option value="[BIV]">[BIV]</option>
+          <option value="[DEA]">[DEA]</option>
+          <option value="[DVD]">[DVD]</option>
+          <option value="[DBA]">[DBA]</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:2;">
+        <label>Judul Incident</label>
+        <input type="text" id="title" placeholder="contoh: ASRS Mengalami..." value="ASRS Mengalami failed">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>IRIS</label>
+        <input type="text" id="iris" placeholder="Nomor IRIS">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="status">
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Severity</label>
+        <select id="severity">
+          <option value="P1 (Critical)">P1 (Critical)</option>
+          <option value="P2 (High)">P2 (High)</option>
+          <option value="P3 (Medium)" selected>P3 (Medium)</option>
+          <option value="P4 (Low)">P4 (Low)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Start Date & Time Picker -->
+    <div class="form-group">
+      <label>Incident Start Date & Time</label>
+      <div class="time-group">
+        <input type="text" id="startDate" placeholder="DD/MM/YYYY">
+        <select id="startHour"></select>
+        <span>:</span>
+        <select id="startMin"></select>
+      </div>
+    </div>
+
+    <!-- Resolved Date & Time Picker -->
+    <div class="form-group">
+      <label>Incident Resolved Date & Time</label>
+      <div class="time-group">
+        <input type="text" id="endDate" placeholder="DD/MM/YYYY" disabled>
+        <select id="endHour" disabled></select>
+        <span>:</span>
+        <select id="endMin" disabled></select>
+      </div>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="hasEnd"> Set Resolved Time
+      </label>
+    </div>
+
+    <!-- Attendance Section -->
+    <div class="form-group">
+      <label>Attendance Team Status</label>
+      <div class="attendance-box">
+        <div class="attendance-grid" id="attendanceGrid"></div>
+        <div class="custom-att-input">
+          <input type="text" id="customTeamInput" placeholder="+ Tambah Tim Manual (misal: PAS)" style="font-size:12px;">
+          <button type="button" onclick="addCustomTeam()" style="width: auto; padding: 4px 12px; font-size:12px;">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>RCA</label>
+      <textarea id="rca" placeholder="TBA">TBA</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Resolution</label>
+      <textarea id="resolution" placeholder="TBA">TBA</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Service Impacted</label>
+      <textarea id="impacted" placeholder="TBA">TBA</textarea>
+    </div>
+
+    <!-- Kronologi Dynamic Section -->
+    <div class="form-group">
+      <label>Kronologi / Description</label>
+      <div class="chrono-box">
+        <div id="chronoListContainer"></div>
+        <button type="button" class="btn-add" onclick="addChronoItem()">+ Tambah Timestamp Kronologi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="output-section">
+    <h3>Hasil Text Format</h3>
+    <pre id="output"></pre>
+    <button onclick="copyText()">Copy Text</button>
+  </div>
+</div>
+
+<script>
+  const defaultTeams = ['DTO', 'DVO', 'DLO', 'BIV', 'DEA', 'DVD', 'DBA', 'SDK', 'DLA', 'DQC', 'RQC'];
+  const attendanceState = {};
+
+  defaultTeams.forEach(team => {
+    attendanceState[team] = 'OFF';
+  });
+
+  function renderAttendanceGrid() {
+    const grid = document.getElementById('attendanceGrid');
+    grid.innerHTML = '';
+    
+    Object.keys(attendanceState).forEach(team => {
+      const div = document.createElement('div');
+      div.className = 'att-item';
+      
+      const label = document.createElement('span');
+      label.textContent = team;
+      
+      const select = document.createElement('select');
+      const options = [
+        { label: 'Off', val: 'OFF' },
+        { label: '✅', val: '✅' },
+        { label: '⏳', val: '⏳' },
+        { label: '❌', val: '❌' }
+      ];
+      
+      options.forEach(opt => {
+        const o = new Option(opt.label, opt.val);
+        if (attendanceState[team] === opt.val) o.selected = true;
+        select.add(o);
+      });
+
+      select.addEventListener('change', (e) => {
+        attendanceState[team] = e.target.value;
+        generateText();
+      });
+
+      div.appendChild(label);
+      div.appendChild(select);
+      grid.appendChild(div);
+    });
+  }
+
+  function addCustomTeam() {
+    const input = document.getElementById('customTeamInput');
+    const teamName = input.value.trim().toUpperCase();
+    if (teamName && !attendanceState[teamName]) {
+      attendanceState[teamName] = '✅';
+      input.value = '';
+      renderAttendanceGrid();
+      generateText();
+    }
+  }
+
+  // Set default Tanggal Hari Ini (DD/MM/YYYY)
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  const dateStr = `${dd}/${mm}/${yyyy}`;
+
+  document.getElementById('startDate').value = dateStr;
+  document.getElementById('endDate').value = dateStr;
+
+  const startHour = document.getElementById('startHour');
+  const endHour = document.getElementById('endHour');
+  const startMin = document.getElementById('startMin');
+  const endMin = document.getElementById('endMin');
+
+  for (let i = 0; i < 24; i++) {
+    const val = String(i).padStart(2, '0');
+    startHour.add(new Option(val, val));
+    endHour.add(new Option(val, val));
+  }
+
+  for (let i = 0; i < 60; i++) {
+    const val = String(i).padStart(2, '0');
+    startMin.add(new Option(val, val));
+    endMin.add(new Option(val, val));
+  }
+
+  startHour.value = "17";
+  startMin.value = "30";
+  endHour.value = String(today.getHours()).padStart(2, '0');
+  endMin.value = String(today.getMinutes()).padStart(2, '0');
+
+  // --- LOGIKA KRONOLOGI DINAMIS (TIAP TIMESTAMP PUNYA TEXTAREA) ---
+  const chronoData = [];
+
+  function addChronoItem(textVal = '') {
+    const sDate = document.getElementById('startDate').value || dateStr;
+    const sH = document.getElementById('startHour').value || "17";
+    const sM = document.getElementById('startMin').value || "30";
+
+    chronoData.push({
+      date: sDate,
+      hour: sH,
+      min: sM,
+      text: textVal
+    });
+
+    renderChronoItems();
+    generateText();
+  }
+
+  function renderChronoItems() {
+    const container = document.getElementById('chronoListContainer');
+    container.innerHTML = '';
+
+    chronoData.forEach((item, index) => {
+      const card = document.createElement('div');
+      card.className = 'chrono-item';
+
+      // Baris Header: Tanggal, Jam, Menit, Tombol Hapus
+      const header = document.createElement('div');
+      header.className = 'chrono-header';
+
+      // Input Tanggal
+      const dateInp = document.createElement('input');
+      dateInp.type = 'text';
+      dateInp.value = item.date;
+      dateInp.placeholder = 'DD/MM/YYYY';
+      dateInp.addEventListener('input', (e) => {
+        item.date = e.target.value;
+        generateText();
+      });
+
+      // Select Jam
+      const hSel = document.createElement('select');
+      for (let i = 0; i < 24; i++) {
+        const v = String(i).padStart(2, '0');
+        hSel.add(new Option(v, v));
+      }
+      hSel.value = item.hour;
+      hSel.addEventListener('change', (e) => {
+        item.hour = e.target.value;
+        generateText();
+      });
+
+      // Select Menit
+      const mSel = document.createElement('select');
+      for (let i = 0; i < 60; i++) {
+        const v = String(i).padStart(2, '0');
+        mSel.add(new Option(v, v));
+      }
+      mSel.value = item.min;
+      mSel.addEventListener('change', (e) => {
+        item.min = e.target.value;
+        generateText();
+      });
+
+      // Tombol Delete
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-del-chrono';
+      delBtn.textContent = '✕ Hapus';
+      delBtn.onclick = () => {
+        chronoData.splice(index, 1);
+        renderChronoItems();
+        generateText();
+      };
+
+      header.appendChild(dateInp);
+      header.appendChild(hSel);
+      header.appendChild(document.createTextNode(':'));
+      header.appendChild(mSel);
+      header.appendChild(delBtn);
+
+      // Input Textarea Kronologi Per Baris
+      const txtArea = document.createElement('textarea');
+      txtArea.style.height = '60px';
+      txtArea.style.marginTop = '4px';
+      txtArea.placeholder = 'Tuliskan deskripsi kronologi untuk timestamp ini...';
+      txtArea.value = item.text;
+      txtArea.addEventListener('input', (e) => {
+        item.text = e.target.value;
+        generateText();
+      });
+
+      card.appendChild(header);
+      card.appendChild(txtArea);
+      container.appendChild(card);
+    });
+  }
+
+  // Tambahkan baris pertama secara otomatis saat awal buka
+  addChronoItem('Tim DLO ...');
+
+  // Sync tanggal/jam di item kronologi pertama saat Incident Start diubah (jika belum diedit manual)
+  document.getElementById('startDate').addEventListener('input', function() {
+    if (chronoData.length > 0) {
+      chronoData[0].date = this.value;
+      renderChronoItems();
+      generateText();
+    }
+  });
+
+  // Listener checkbox Monthly
+  document.getElementById('isMonthly').addEventListener('change', generateText);
+
+  // Auto-enable/check resolved date jika status diubah ke 'Resolved'
+  document.getElementById('status').addEventListener('change', function() {
+    const hasEndCb = document.getElementById('hasEnd');
+    if (this.value === 'Resolved') {
+      hasEndCb.checked = true;
+      document.getElementById('endDate').disabled = false;
+      endHour.disabled = false;
+      endMin.disabled = false;
+    }
+    generateText();
+  });
+
+  document.getElementById('hasEnd').addEventListener('change', function() {
+    document.getElementById('endDate').disabled = !this.checked;
+    endHour.disabled = !this.checked;
+    endMin.disabled = !this.checked;
+    generateText();
+  });
+
+  function generateText() {
+    const status = document.getElementById('status').value;
+    
+    // Switch Header secara otomatis
+    const headerTitle = (status === 'Resolved') ? 'INCIDENT REPORT' : 'INCIDENT NOTIFICATION';
+    const headerDivider = '='.repeat(headerTitle.length);
+
+    const prefix = document.getElementById('prefix').value;
+    const isMonthly = document.getElementById('isMonthly').checked;
+    const monthlyTag = isMonthly ? ' [MTH]' : '';
+    const title = document.getElementById('title').value;
+
+    const iris = document.getElementById('iris').value;
+    const severity = document.getElementById('severity').value;
+    
+    const sDate = document.getElementById('startDate').value;
+    const sH = document.getElementById('startHour').value;
+    const sM = document.getElementById('startMin').value;
+    const startTimeFormatted = sDate ? `[${sDate} ${sH}:${sM}]` : '';
+
+    const hasEnd = document.getElementById('hasEnd').checked;
+    let endTimeFormatted = '';
+    if (hasEnd) {
+      const eDate = document.getElementById('endDate').value;
+      const eH = document.getElementById('endHour').value;
+      const eM = document.getElementById('endMin').value;
+      endTimeFormatted = eDate ? `[${eDate} ${eH}:${eM}]` : '';
+    }
+
+    // Build Attendance string
+    const attList = [];
+    Object.keys(attendanceState).forEach(team => {
+      const statusIcon = attendanceState[team];
+      if (statusIcon !== 'OFF') {
+        attList.push(`${team} ${statusIcon}`);
+      }
+    });
+    const attendanceStr = attList.join(' | ');
+
+    const rca = document.getElementById('rca').value;
+    const resolution = document.getElementById('resolution').value;
+    const impacted = document.getElementById('impacted').value;
+
+    // Combine Chronology Items
+    const chronoTextArr = chronoData.map(item => {
+      const timeTag = `[${item.date || ''} ${item.hour}:${item.min}]`;
+      return `${timeTag}\n${item.text}`;
+    });
+    const chronologyFormatted = chronoTextArr.join('\n\n');
+
+    const template = `${headerTitle}
+${headerDivider}
+Incident Name: ${prefix}${monthlyTag} - ${title}
+IRIS: ${iris}
+Incident Status: ${status}
+Incident Severity: ${severity}
+Incident Start: ${startTimeFormatted}
+Incident Resolved: ${endTimeFormatted}
+
+Attendance:
+${attendanceStr}
+
+RCA : 
+${rca}
+
+Resolution : 
+${resolution}
+
+Service Impacted:
+${impacted}
+
+[Description/Chronology]
+
+${chronologyFormatted}`;
+
+    document.getElementById('output').textContent = template;
+  }
+
+  renderAttendanceGrid();
+
+  document.querySelectorAll('input, select, textarea').forEach(element => {
+    element.addEventListener('input', generateText);
+  });
+
+  function copyText() {
+    const text = document.getElementById('output').textContent;
+    navigator.clipboard.writeText(text);
+    alert('Text Incident berhasil di-copy!');
+  }
+
+  generateText();
+</script>
+
+</body>
+</html>
