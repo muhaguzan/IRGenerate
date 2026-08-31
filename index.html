@@ -170,28 +170,156 @@
     <h3>Hasil Text Format</h3>
     <pre id="output"></pre>
     <button onclick="copyText()">Copy Text</button>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button type="button" onclick="saveToLocalStorage()" style="flex:1; background:#198754;">
+        💾 Simpan Data
+      </button>
+      <button type="button" onclick="resetToTemplate()" style="flex:1; background:#6c757d;">
+        ↺ Template Awal
+      </button>
+    </div>
+    <div id="saveStatus" style="text-align:center; font-size:12px; color:#198754; margin-top:6px; min-height:16px;"></div>
   </div>
 </div>
 
 <script>
+  const STORAGE_KEY = 'incidentNotificationTemplate';
+
   const defaultTeams = ['DTO', 'DVO', 'DLO', 'BIV', 'DEA', 'DVD', 'DBA', 'SDK', 'DLA', 'DQC', 'RQC'];
   const attendanceState = {};
+  defaultTeams.forEach(team => attendanceState[team] = 'OFF');
 
-  defaultTeams.forEach(team => {
-    attendanceState[team] = 'OFF';
-  });
+  const chronoData = [];
 
+  // =========================================================
+  // LOCAL STORAGE
+  // =========================================================
+  function getFormData() {
+    return {
+      isMonthly: document.getElementById('isMonthly').checked,
+      prefix: document.getElementById('prefix').value,
+      title: document.getElementById('title').value,
+      iris: document.getElementById('iris').value,
+      status: document.getElementById('status').value,
+      severity: document.getElementById('severity').value,
+      startDate: document.getElementById('startDate').value,
+      startHour: document.getElementById('startHour').value,
+      startMin: document.getElementById('startMin').value,
+      endDate: document.getElementById('endDate').value,
+      endHour: document.getElementById('endHour').value,
+      endMin: document.getElementById('endMin').value,
+      hasEnd: document.getElementById('hasEnd').checked,
+      rca: document.getElementById('rca').value,
+      resolution: document.getElementById('resolution').value,
+      impacted: document.getElementById('impacted').value,
+      attendanceState: {...attendanceState},
+      chronoData: chronoData.map(item => ({...item}))
+    };
+  }
+
+  function saveToLocalStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData()));
+      showSaveStatus('✓ Tersimpan');
+    } catch (e) {
+      console.error('Gagal menyimpan Local Storage:', e);
+    }
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return false;
+
+      const data = JSON.parse(saved);
+
+      if (typeof data.isMonthly === 'boolean')
+        document.getElementById('isMonthly').checked = data.isMonthly;
+
+      const fields = [
+        'prefix', 'title', 'iris', 'status', 'severity',
+        'startDate', 'startHour', 'startMin',
+        'endDate', 'endHour', 'endMin',
+        'rca', 'resolution', 'impacted'
+      ];
+
+      fields.forEach(id => {
+        if (data[id] !== undefined && document.getElementById(id)) {
+          document.getElementById(id).value = data[id];
+        }
+      });
+
+      if (typeof data.hasEnd === 'boolean')
+        document.getElementById('hasEnd').checked = data.hasEnd;
+
+      if (data.attendanceState) {
+        Object.keys(attendanceState).forEach(team => {
+          if (data.attendanceState[team] !== undefined) {
+            attendanceState[team] = data.attendanceState[team];
+          }
+        });
+
+        // Tim yang ditambahkan manual juga dipulihkan
+        Object.keys(data.attendanceState).forEach(team => {
+          if (!attendanceState.hasOwnProperty(team)) {
+            attendanceState[team] = data.attendanceState[team];
+          }
+        });
+      }
+
+      chronoData.length = 0;
+      if (Array.isArray(data.chronoData) && data.chronoData.length > 0) {
+        data.chronoData.forEach(item => {
+          chronoData.push({
+            date: item.date || '',
+            hour: item.hour || '00',
+            min: item.min || '00',
+            text: item.text || ''
+          });
+        });
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Gagal membaca Local Storage:', e);
+      return false;
+    }
+  }
+
+  function showSaveStatus(message) {
+    const statusEl = document.getElementById('saveStatus');
+    if (!statusEl) return;
+
+    statusEl.textContent = message;
+    clearTimeout(window.saveStatusTimer);
+    window.saveStatusTimer = setTimeout(() => {
+      statusEl.textContent = '';
+    }, 1500);
+  }
+
+  function resetToTemplate() {
+    if (!confirm('Kembalikan semua pengisian ke template awal? Data yang tersimpan di Local Storage akan dihapus.')) {
+      return;
+    }
+
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  // =========================================================
+  // ATTENDANCE
+  // =========================================================
   function renderAttendanceGrid() {
     const grid = document.getElementById('attendanceGrid');
     grid.innerHTML = '';
-    
+
     Object.keys(attendanceState).forEach(team => {
       const div = document.createElement('div');
       div.className = 'att-item';
-      
+
       const label = document.createElement('span');
       label.textContent = team;
-      
+
       const select = document.createElement('select');
       const options = [
         { label: 'Off', val: 'OFF' },
@@ -199,7 +327,7 @@
         { label: '⏳', val: '⏳' },
         { label: '❌', val: '❌' }
       ];
-      
+
       options.forEach(opt => {
         const o = new Option(opt.label, opt.val);
         if (attendanceState[team] === opt.val) o.selected = true;
@@ -209,6 +337,7 @@
       select.addEventListener('change', (e) => {
         attendanceState[team] = e.target.value;
         generateText();
+        saveToLocalStorage();
       });
 
       div.appendChild(label);
@@ -220,15 +349,19 @@
   function addCustomTeam() {
     const input = document.getElementById('customTeamInput');
     const teamName = input.value.trim().toUpperCase();
+
     if (teamName && !attendanceState[teamName]) {
       attendanceState[teamName] = '✅';
       input.value = '';
       renderAttendanceGrid();
       generateText();
+      saveToLocalStorage();
     }
   }
 
-  // Set default Tanggal Hari Ini (DD/MM/YYYY)
+  // =========================================================
+  // DEFAULT DATE/TIME
+  // =========================================================
   const today = new Date();
   const dd = String(today.getDate()).padStart(2, '0');
   const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -260,15 +393,15 @@
   endHour.value = String(today.getHours()).padStart(2, '0');
   endMin.value = String(today.getMinutes()).padStart(2, '0');
 
-  // --- LOGIKA KRONOLOGI DINAMIS (TIAP TIMESTAMP PUNYA TEXTAREA) ---
-  const chronoData = [];
-
-  function addChronoItem(textVal = '') {
+  // =========================================================
+  // CHRONOLOGY
+  // =========================================================
+  function addChronoItem(textVal = '', customData = null) {
     const sDate = document.getElementById('startDate').value || dateStr;
     const sH = document.getElementById('startHour').value || "17";
     const sM = document.getElementById('startMin').value || "30";
 
-    chronoData.push({
+    chronoData.push(customData || {
       date: sDate,
       hour: sH,
       min: sM,
@@ -277,6 +410,7 @@
 
     renderChronoItems();
     generateText();
+    saveToLocalStorage();
   }
 
   function renderChronoItems() {
@@ -287,11 +421,9 @@
       const card = document.createElement('div');
       card.className = 'chrono-item';
 
-      // Baris Header: Tanggal, Jam, Menit, Tombol Hapus
       const header = document.createElement('div');
       header.className = 'chrono-header';
 
-      // Input Tanggal
       const dateInp = document.createElement('input');
       dateInp.type = 'text';
       dateInp.value = item.date;
@@ -299,9 +431,9 @@
       dateInp.addEventListener('input', (e) => {
         item.date = e.target.value;
         generateText();
+        saveToLocalStorage();
       });
 
-      // Select Jam
       const hSel = document.createElement('select');
       for (let i = 0; i < 24; i++) {
         const v = String(i).padStart(2, '0');
@@ -311,9 +443,9 @@
       hSel.addEventListener('change', (e) => {
         item.hour = e.target.value;
         generateText();
+        saveToLocalStorage();
       });
 
-      // Select Menit
       const mSel = document.createElement('select');
       for (let i = 0; i < 60; i++) {
         const v = String(i).padStart(2, '0');
@@ -323,9 +455,9 @@
       mSel.addEventListener('change', (e) => {
         item.min = e.target.value;
         generateText();
+        saveToLocalStorage();
       });
 
-      // Tombol Delete
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'btn-del-chrono';
@@ -334,6 +466,7 @@
         chronoData.splice(index, 1);
         renderChronoItems();
         generateText();
+        saveToLocalStorage();
       };
 
       header.appendChild(dateInp);
@@ -342,7 +475,6 @@
       header.appendChild(mSel);
       header.appendChild(delBtn);
 
-      // Input Textarea Kronologi Per Baris
       const txtArea = document.createElement('textarea');
       txtArea.style.height = '60px';
       txtArea.style.marginTop = '4px';
@@ -351,6 +483,7 @@
       txtArea.addEventListener('input', (e) => {
         item.text = e.target.value;
         generateText();
+        saveToLocalStorage();
       });
 
       card.appendChild(header);
@@ -359,45 +492,16 @@
     });
   }
 
-  // Tambahkan baris pertama secara otomatis saat awal buka
-  addChronoItem('Tim DLO ...');
-
-  // Sync tanggal/jam di item kronologi pertama saat Incident Start diubah (jika belum diedit manual)
-  document.getElementById('startDate').addEventListener('input', function() {
-    if (chronoData.length > 0) {
-      chronoData[0].date = this.value;
-      renderChronoItems();
-      generateText();
-    }
-  });
-
-  // Listener checkbox Monthly
-  document.getElementById('isMonthly').addEventListener('change', generateText);
-
-  // Auto-enable/check resolved date jika status diubah ke 'Resolved'
-  document.getElementById('status').addEventListener('change', function() {
-    const hasEndCb = document.getElementById('hasEnd');
-    if (this.value === 'Resolved') {
-      hasEndCb.checked = true;
-      document.getElementById('endDate').disabled = false;
-      endHour.disabled = false;
-      endMin.disabled = false;
-    }
-    generateText();
-  });
-
-  document.getElementById('hasEnd').addEventListener('change', function() {
-    document.getElementById('endDate').disabled = !this.checked;
-    endHour.disabled = !this.checked;
-    endMin.disabled = !this.checked;
-    generateText();
-  });
-
+  // =========================================================
+  // GENERATE TEXT
+  // =========================================================
   function generateText() {
     const status = document.getElementById('status').value;
-    
-    // Switch Header secara otomatis
-    const headerTitle = (status === 'Resolved') ? 'INCIDENT REPORT' : 'INCIDENT NOTIFICATION';
+
+    const headerTitle = (status === 'Resolved')
+      ? 'INCIDENT REPORT'
+      : 'INCIDENT NOTIFICATION';
+
     const headerDivider = '='.repeat(headerTitle.length);
 
     const prefix = document.getElementById('prefix').value;
@@ -407,7 +511,7 @@
 
     const iris = document.getElementById('iris').value;
     const severity = document.getElementById('severity').value;
-    
+
     const sDate = document.getElementById('startDate').value;
     const sH = document.getElementById('startHour').value;
     const sM = document.getElementById('startMin').value;
@@ -415,6 +519,7 @@
 
     const hasEnd = document.getElementById('hasEnd').checked;
     let endTimeFormatted = '';
+
     if (hasEnd) {
       const eDate = document.getElementById('endDate').value;
       const eH = document.getElementById('endHour').value;
@@ -422,7 +527,6 @@
       endTimeFormatted = eDate ? `[${eDate} ${eH}:${eM}]` : '';
     }
 
-    // Build Attendance string
     const attList = [];
     Object.keys(attendanceState).forEach(team => {
       const statusIcon = attendanceState[team];
@@ -430,17 +534,18 @@
         attList.push(`${team} ${statusIcon}`);
       }
     });
+
     const attendanceStr = attList.join(' | ');
 
     const rca = document.getElementById('rca').value;
     const resolution = document.getElementById('resolution').value;
     const impacted = document.getElementById('impacted').value;
 
-    // Combine Chronology Items
     const chronoTextArr = chronoData.map(item => {
       const timeTag = `[${item.date || ''} ${item.hour}:${item.min}]`;
       return `${timeTag}\n${item.text}`;
     });
+
     const chronologyFormatted = chronoTextArr.join('\n\n');
 
     const template = `${headerTitle}
@@ -471,10 +576,75 @@ ${chronologyFormatted}`;
     document.getElementById('output').textContent = template;
   }
 
+  // =========================================================
+  // RESOLVED DATE CONTROL
+  // =========================================================
+  function updateEndControls() {
+    const enabled = document.getElementById('hasEnd').checked;
+    document.getElementById('endDate').disabled = !enabled;
+    endHour.disabled = !enabled;
+    endMin.disabled = !enabled;
+  }
+
+  document.getElementById('status').addEventListener('change', function() {
+    const hasEndCb = document.getElementById('hasEnd');
+
+    if (this.value === 'Resolved') {
+      hasEndCb.checked = true;
+    }
+
+    updateEndControls();
+    generateText();
+    saveToLocalStorage();
+  });
+
+  document.getElementById('hasEnd').addEventListener('change', function() {
+    updateEndControls();
+    generateText();
+    saveToLocalStorage();
+  });
+
+  document.getElementById('startDate').addEventListener('input', function() {
+    if (chronoData.length > 0) {
+      chronoData[0].date = this.value;
+      renderChronoItems();
+      generateText();
+    }
+    saveToLocalStorage();
+  });
+
+  document.getElementById('isMonthly').addEventListener('change', () => {
+    generateText();
+    saveToLocalStorage();
+  });
+
+  // =========================================================
+  // INIT
+  // =========================================================
+  const restored = loadFromLocalStorage();
+
   renderAttendanceGrid();
 
+  if (!restored) {
+    addChronoItem('Tim DLO ...');
+  } else {
+    renderChronoItems();
+  }
+
+  updateEndControls();
+  generateText();
+
+  // Auto-save semua field
   document.querySelectorAll('input, select, textarea').forEach(element => {
-    element.addEventListener('input', generateText);
+    element.addEventListener('input', () => {
+      generateText();
+      saveToLocalStorage();
+    });
+
+    element.addEventListener('change', () => {
+      generateText();
+      saveToLocalStorage();
+    });
   });
 
   function copyText() {
@@ -482,8 +652,6 @@ ${chronologyFormatted}`;
     navigator.clipboard.writeText(text);
     alert('Text Incident berhasil di-copy!');
   }
-
-  generateText();
 </script>
 
 </body>
