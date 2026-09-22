@@ -1283,15 +1283,18 @@
         if (mode === "quick") {
           template = `*QUICK INCIDENT*
 ==============
-* Incident Name : ${prefix}${monthlyTag} - ${title}
-* IRIS : ${iris}
-* Incident Status : ${status}
-* Incident Severity :${severity}
-* RCA : ${rca}
-* Service/Job Impacted : ${impacted}
-* Attendence:
+Incident Name : ${prefix}${monthlyTag} - ${title}
+IRIS : ${iris}
+Incident Status : ${status}
+Incident Severity :${severity}
+RCA : ${rca}
+Service/Job Impacted : 
+${impacted}
+
+Attendence:
 ${attendanceStr}
-* Link Koordinasi : ${coordLink}${hasNcm ? `\n* Link NCM : ${ncmLink}` : ""}${hasDeployment ? `\n* Impacted Deployment : ${deploymentLink}` : ""}`;
+
+Link Koordinasi : ${coordLink}${hasNcm ? `\n* Link NCM : ${ncmLink}` : ""}${hasDeployment ? `\n* Impacted Deployment : ${deploymentLink}` : ""}`;
         } else {
           const headerTitle =
             status === "Resolved" ? "INCIDENT REPORT" : "INCIDENT NOTIFICATION";
