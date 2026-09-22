@@ -65,7 +65,6 @@
         line-height: 1.5;
       }
 
-      /* ---------- Header ---------- */
       .page-header {
         background: var(--ink);
         padding: 18px 24px;
@@ -134,7 +133,6 @@
         box-shadow: 0 0 0 3px rgba(63, 212, 127, 0.22);
       }
 
-      /* ---------- Layout ---------- */
       .container {
         display: grid;
         grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
@@ -176,15 +174,6 @@
         font-weight: 650;
         color: var(--ink);
       }
-      .section-badge {
-        font-size: 10.5px;
-        font-weight: 700;
-        letter-spacing: 0.3px;
-        color: var(--accent);
-        background: var(--accent-soft);
-        padding: 5px 9px;
-        border-radius: 999px;
-      }
 
       fieldset {
         border: 0;
@@ -218,6 +207,7 @@
       }
 
       input[type="text"],
+      input[type="date"],
       select,
       textarea {
         width: 100%;
@@ -234,6 +224,7 @@
           box-shadow 0.12s;
       }
       input[type="text"]:focus,
+      input[type="date"]:focus,
       select:focus,
       textarea:focus {
         border-color: var(--accent);
@@ -383,7 +374,7 @@
       }
       .chrono-header {
         display: grid;
-        grid-template-columns: 1.3fr 68px auto 68px auto;
+        grid-template-columns: 1.5fr 68px auto 68px auto;
         gap: 7px;
         align-items: center;
         margin-bottom: 9px;
@@ -392,6 +383,29 @@
       .chrono-header select {
         padding: 7px 8px;
         font-size: 12.5px;
+      }
+      .chrono-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--line-soft);
+      }
+      .resolved-checkbox-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ok);
+        cursor: pointer;
+      }
+      .resolved-checkbox-label input {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--ok);
+        cursor: pointer;
       }
       .chrono-item textarea {
         font-family: var(--font-ui);
@@ -402,7 +416,7 @@
         background: var(--bad-soft) !important;
         color: var(--bad) !important;
         border: 1px solid #f4c3ca !important;
-        padding: 7px 10px !important;
+        padding: 6px 10px !important;
         border-radius: var(--radius-sm) !important;
         width: auto !important;
         font-size: 11.5px !important;
@@ -503,7 +517,6 @@
         margin-top: 9px;
       }
 
-      /* ---------- Responsive ---------- */
       @media (max-width: 1000px) {
         .container {
           grid-template-columns: 1fr;
@@ -558,6 +571,7 @@
         }
 
         input[type="text"],
+        input[type="date"],
         select,
         textarea {
           font-size: 16px;
@@ -569,10 +583,6 @@
 
         .chrono-header {
           grid-template-columns: 1fr 62px auto 62px;
-        }
-        .chrono-header .btn-del-chrono {
-          grid-column: 1 / -1;
-          margin-top: 2px;
         }
 
         .attendance-grid {
@@ -781,10 +791,10 @@
           <div class="form-group">
             <label for="startDate">Incident Start Date & Time</label>
             <div class="time-group">
-              <input type="text" id="startDate" placeholder="DD/MM/YYYY" />
-              <select id="startHour"></select>
+              <input type="date" id="startDate" disabled />
+              <select id="startHour" disabled></select>
               <span>:</span>
-              <select id="startMin"></select>
+              <select id="startMin" disabled></select>
             </div>
           </div>
         </fieldset>
@@ -853,6 +863,7 @@
               color: var(--ok);
             "
           >
+          </span>
         </div>
 
         <div class="output-controls">
@@ -909,6 +920,32 @@
 
       const chronoData = [];
 
+      const startHourSelect = document.getElementById("startHour");
+      const startMinSelect = document.getElementById("startMin");
+
+      for (let i = 0; i < 24; i++) {
+        const val = String(i).padStart(2, "0");
+        startHourSelect.add(new Option(val, val));
+      }
+
+      for (let i = 0; i < 60; i++) {
+        const val = String(i).padStart(2, "0");
+        startMinSelect.add(new Option(val, val));
+      }
+
+      function updateStartTimeFromChrono() {
+        if (chronoData.length > 0) {
+          const firstChrono = chronoData[0];
+          document.getElementById("startDate").value = firstChrono.date || "";
+          document.getElementById("startHour").value = firstChrono.hour || "00";
+          document.getElementById("startMin").value = firstChrono.min || "00";
+        } else {
+          document.getElementById("startDate").value = "";
+          document.getElementById("startHour").value = "00";
+          document.getElementById("startMin").value = "00";
+        }
+      }
+
       function toggleNcmInput() {
         const hasNcm = document.getElementById("hasNcm").checked;
         const ncmGroup = document.getElementById("ncmGroup");
@@ -925,12 +962,20 @@
         saveToLocalStorage();
       }
 
-      function getLastChronoFormatted() {
-        if (chronoData.length > 0) {
-          const lastChrono = chronoData[chronoData.length - 1];
-          if (lastChrono.date && lastChrono.hour && lastChrono.min) {
-            return `[${lastChrono.date} ${lastChrono.hour}:${lastChrono.min}]`;
+      function getResolvedTimeFormatted() {
+        const resolvedChrono = chronoData.find((item) => item.isResolved);
+        if (
+          resolvedChrono &&
+          resolvedChrono.date &&
+          resolvedChrono.hour &&
+          resolvedChrono.min
+        ) {
+          let formattedDate = resolvedChrono.date;
+          if (formattedDate.includes("-")) {
+            const [y, m, d] = formattedDate.split("-");
+            formattedDate = `${d}/${m}/${y}`;
           }
+          return `[${formattedDate} ${resolvedChrono.hour}:${resolvedChrono.min}]`;
         }
         return "";
       }
@@ -1000,9 +1045,6 @@
             "ncmLink",
             "deploymentLink",
             "templateMode",
-            "startDate",
-            "startHour",
-            "startMin",
             "rca",
             "resolution",
             "impacted",
@@ -1036,10 +1078,12 @@
                 hour: item.hour || "00",
                 min: item.min || "00",
                 text: item.text || "",
+                isResolved: !!item.isResolved,
               });
             });
           }
 
+          updateStartTimeFromChrono();
           return true;
         } catch (e) {
           console.error("Gagal membaca Local Storage:", e);
@@ -1121,43 +1165,50 @@
         }
       }
 
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, "0");
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const yyyy = today.getFullYear();
-      const dateStr = `${dd}/${mm}/${yyyy}`;
-
-      document.getElementById("startDate").value = dateStr;
-
-      const startHour = document.getElementById("startHour");
-      const startMin = document.getElementById("startMin");
-
-      for (let i = 0; i < 24; i++) {
-        const val = String(i).padStart(2, "0");
-        startHour.add(new Option(val, val));
-      }
-
-      for (let i = 0; i < 60; i++) {
-        const val = String(i).padStart(2, "0");
-        startMin.add(new Option(val, val));
-      }
-
-      startHour.value = "17";
-      startMin.value = "30";
-
       function addChronoItem(textVal = "", customData = null) {
-        const sDate = document.getElementById("startDate").value || dateStr;
-        const sH = document.getElementById("startHour").value || "17";
-        const sM = document.getElementById("startMin").value || "30";
+        let sDate,
+          sH,
+          sM,
+          isRes = false;
 
-        chronoData.push(
-          customData || {
-            date: sDate,
-            hour: sH,
-            min: sM,
-            text: textVal,
-          },
-        );
+        if (customData) {
+          sDate = customData.date;
+          sH = customData.hour;
+          sM = customData.min;
+          isRes = !!customData.isResolved;
+        } else {
+          const now = new Date();
+          const curYyyy = now.getFullYear();
+          const curMm = String(now.getMonth() + 1).padStart(2, "0");
+          const curDd = String(now.getDate()).padStart(2, "0");
+
+          sDate = `${curYyyy}-${curMm}-${curDd}`;
+          sH = String(now.getHours()).padStart(2, "0");
+          sM = String(now.getMinutes()).padStart(2, "0");
+        }
+
+        chronoData.push({
+          date: sDate,
+          hour: sH,
+          min: sM,
+          text: textVal,
+          isResolved: isRes,
+        });
+
+        updateStartTimeFromChrono();
+        renderChronoItems();
+        generateText();
+        saveToLocalStorage();
+      }
+
+      function setResolvedChronoIndex(targetIndex) {
+        chronoData.forEach((item, index) => {
+          item.isResolved = index === targetIndex;
+        });
+
+        if (targetIndex !== null && targetIndex >= 0) {
+          document.getElementById("status").value = "Resolved";
+        }
 
         renderChronoItems();
         generateText();
@@ -1176,11 +1227,11 @@
           header.className = "chrono-header";
 
           const dateInp = document.createElement("input");
-          dateInp.type = "text";
+          dateInp.type = "date";
           dateInp.value = item.date;
-          dateInp.placeholder = "DD/MM/YYYY";
-          dateInp.addEventListener("input", (e) => {
+          dateInp.addEventListener("change", (e) => {
             item.date = e.target.value;
+            updateStartTimeFromChrono();
             generateText();
             saveToLocalStorage();
           });
@@ -1193,6 +1244,7 @@
           hSel.value = item.hour;
           hSel.addEventListener("change", (e) => {
             item.hour = e.target.value;
+            updateStartTimeFromChrono();
             generateText();
             saveToLocalStorage();
           });
@@ -1205,26 +1257,15 @@
           mSel.value = item.min;
           mSel.addEventListener("change", (e) => {
             item.min = e.target.value;
+            updateStartTimeFromChrono();
             generateText();
             saveToLocalStorage();
           });
-
-          const delBtn = document.createElement("button");
-          delBtn.type = "button";
-          delBtn.className = "btn-del-chrono";
-          delBtn.textContent = "✕ Hapus";
-          delBtn.onclick = () => {
-            chronoData.splice(index, 1);
-            renderChronoItems();
-            generateText();
-            saveToLocalStorage();
-          };
 
           header.appendChild(dateInp);
           header.appendChild(hSel);
           header.appendChild(document.createTextNode(":"));
           header.appendChild(mSel);
-          header.appendChild(delBtn);
 
           const txtArea = document.createElement("textarea");
           txtArea.style.height = "60px";
@@ -1238,8 +1279,47 @@
             saveToLocalStorage();
           });
 
+          const footer = document.createElement("div");
+          footer.className = "chrono-footer";
+
+          const resLabel = document.createElement("label");
+          resLabel.className = "resolved-checkbox-label";
+
+          const resCheckbox = document.createElement("input");
+          resCheckbox.type = "checkbox";
+          resCheckbox.checked = !!item.isResolved;
+          resCheckbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+              setResolvedChronoIndex(index);
+            } else {
+              setResolvedChronoIndex(null);
+            }
+          });
+
+          const resText = document.createElement("span");
+          resText.textContent = "Set sebagai Incident Resolved Time";
+
+          resLabel.appendChild(resCheckbox);
+          resLabel.appendChild(resText);
+
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "btn-del-chrono";
+          delBtn.textContent = "✕ Hapus";
+          delBtn.onclick = () => {
+            chronoData.splice(index, 1);
+            updateStartTimeFromChrono();
+            renderChronoItems();
+            generateText();
+            saveToLocalStorage();
+          };
+
+          footer.appendChild(resLabel);
+          footer.appendChild(delBtn);
+
           card.appendChild(header);
           card.appendChild(txtArea);
+          card.appendChild(footer);
           container.appendChild(card);
         });
       }
@@ -1300,16 +1380,26 @@ Link Koordinasi : ${coordLink}${hasNcm ? `\n* Link NCM : ${ncmLink}` : ""}${hasD
             status === "Resolved" ? "INCIDENT REPORT" : "INCIDENT NOTIFICATION";
           const headerDivider = "=".repeat(headerTitle.length);
 
-          const sDate = document.getElementById("startDate").value;
+          let sDate = document.getElementById("startDate").value;
+          if (sDate && sDate.includes("-")) {
+            const [y, m, d] = sDate.split("-");
+            sDate = `${d}/${m}/${y}`;
+          }
+
           const sH = document.getElementById("startHour").value;
           const sM = document.getElementById("startMin").value;
           const startTimeFormatted = sDate ? `[${sDate} ${sH}:${sM}]` : "";
 
           const endTimeFormatted =
-            status === "Resolved" ? getLastChronoFormatted() : "";
+            status === "Resolved" ? getResolvedTimeFormatted() : "";
 
           const chronoTextArr = chronoData.map((item) => {
-            const timeTag = `[${item.date || ""} ${item.hour}:${item.min}]`;
+            let formattedDate = item.date || "";
+            if (formattedDate.includes("-")) {
+              const [y, m, d] = formattedDate.split("-");
+              formattedDate = `${d}/${m}/${y}`;
+            }
+            const timeTag = `[${formattedDate} ${item.hour}:${item.min}]`;
             return `${timeTag}\n${item.text}`;
           });
 
@@ -1351,17 +1441,6 @@ ${chronologyFormatted}`;
         generateText();
         saveToLocalStorage();
       });
-
-      document
-        .getElementById("startDate")
-        .addEventListener("input", function () {
-          if (chronoData.length > 0) {
-            chronoData[0].date = this.value;
-            renderChronoItems();
-            generateText();
-          }
-          saveToLocalStorage();
-        });
 
       document.getElementById("isMonthly").addEventListener("change", () => {
         generateText();
