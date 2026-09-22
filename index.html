@@ -304,16 +304,18 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-top: 9px;
-        font-weight: 500;
-        font-size: 12.5px;
-        color: var(--ink-soft);
+        margin-top: 8px;
         cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink-soft);
       }
+
       .checkbox-inline input {
         width: 15px;
         height: 15px;
         accent-color: var(--accent);
+        cursor: pointer;
       }
 
       .attendance-box {
@@ -391,8 +393,6 @@
         padding: 7px 8px;
         font-size: 12.5px;
       }
-      .chrono-header textarea-wrap {
-      }
       .chrono-item textarea {
         font-family: var(--font-ui);
         font-size: 13px;
@@ -436,8 +436,8 @@
 
       pre {
         margin: 0;
-        min-height: 480px;
-        max-height: calc(100vh - 300px);
+        min-height: 380px;
+        max-height: calc(100vh - 320px);
         overflow: auto;
         background: #0d1424;
         color: #d7ddec;
@@ -451,29 +451,37 @@
         border: 1px solid #1c2540;
       }
 
+      .output-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .template-selector-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
       .action-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-top: 12px;
       }
       .btn-copy {
         background: var(--accent);
         color: #fff;
         width: 100%;
         padding: 11px;
-        grid-column: 1 / -1;
         font-size: 13px;
-      }
-      .btn-save {
-        background: var(--ok);
-        color: #fff;
-        width: 100%;
       }
       .btn-reset {
         background: #5b6479;
         color: #fff;
         width: 100%;
+        padding: 11px;
+        font-size: 13px;
       }
       .btn-export {
         background: #1c3f9e;
@@ -553,7 +561,7 @@
         select,
         textarea {
           font-size: 16px;
-        } /* prevents iOS zoom */
+        }
 
         .time-group {
           grid-template-columns: 1fr 0.75fr auto 0.75fr;
@@ -577,7 +585,6 @@
         }
       }
 
-      /* Mobile quick-action bar for the most-used action */
       .mobile-copy-bar {
         display: none;
       }
@@ -604,7 +611,6 @@
         }
       }
 
-      /* Focus visibility for keyboard users */
       button:focus-visible,
       input:focus-visible,
       select:focus-visible,
@@ -659,10 +665,8 @@
       <div class="form-section">
         <div class="section-title">
           <h3>Input Incident Details</h3>
-          <span class="section-badge">AUTO SAVE</span>
         </div>
 
-        <!-- Checkbox Monthly -->
         <div class="monthly-box">
           <label>
             <input type="checkbox" id="isMonthly" />
@@ -682,10 +686,6 @@
                 <option value="[DTO]">[DTO]</option>
                 <option value="[DVO]">[DVO]</option>
                 <option value="[DLO]" selected>[DLO]</option>
-                <option value="[BIV]">[BIV]</option>
-                <option value="[DEA]">[DEA]</option>
-                <option value="[DVD]">[DVD]</option>
-                <option value="[DBA]">[DBA]</option>
               </select>
             </div>
             <div class="form-group" style="flex: 2">
@@ -693,8 +693,8 @@
               <input
                 type="text"
                 id="title"
-                placeholder="contoh: ASRS Mengalami..."
-                value="ASRS Mengalami failed"
+                placeholder="contoh: EDW_DLY_DASH_PINJAMAN_BOD Mengalami Failed pada Step 1"
+                value="EDW_DLY_DASH_PINJAMAN_BOD Mengalami Failed pada Step 1"
               />
             </div>
           </div>
@@ -702,12 +702,12 @@
           <div class="row">
             <div class="form-group">
               <label for="iris">IRIS</label>
-              <input type="text" id="iris" placeholder="Nomor IRIS" />
+              <input type="text" id="iris" placeholder="TBA" value="TBA" />
             </div>
             <div class="form-group">
               <label for="status">Status</label>
               <select id="status">
-                <option value="In Progress">In Progress</option>
+                <option value="In Progress" selected>In Progress</option>
                 <option value="Resolved">Resolved</option>
               </select>
             </div>
@@ -721,12 +721,63 @@
               </select>
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="coordLink">Link Koordinasi</label>
+            <input
+              type="text"
+              id="coordLink"
+              placeholder="https://..."
+              value="https://bbri.id/DataPipelineCoordinationRoom1"
+            />
+
+            <label class="checkbox-inline">
+              <input type="checkbox" id="hasNcm" onchange="toggleNcmInput()" />
+              <span>Ada Link NCM?</span>
+            </label>
+
+            <label class="checkbox-inline">
+              <input
+                type="checkbox"
+                id="hasDeployment"
+                onchange="toggleDeploymentInput()"
+              />
+              <span>Ada Impacted Deployment?</span>
+            </label>
+          </div>
+
+          <div
+            class="form-group"
+            id="ncmGroup"
+            style="display: none; margin-top: 10px"
+          >
+            <label for="ncmLink">Link NCM</label>
+            <input
+              type="text"
+              id="ncmLink"
+              placeholder="https://..."
+              value=""
+            />
+          </div>
+
+          <div
+            class="form-group"
+            id="deploymentGroup"
+            style="display: none; margin-top: 10px"
+          >
+            <label for="deploymentLink">Impacted Deployment</label>
+            <input
+              type="text"
+              id="deploymentLink"
+              placeholder="https://..."
+              value=""
+            />
+          </div>
         </fieldset>
 
         <fieldset>
           <legend>Waktu Kejadian</legend>
 
-          <!-- Start Date & Time Picker -->
           <div class="form-group">
             <label for="startDate">Incident Start Date & Time</label>
             <div class="time-group">
@@ -735,25 +786,6 @@
               <span>:</span>
               <select id="startMin"></select>
             </div>
-          </div>
-
-          <!-- Resolved Date & Time Picker -->
-          <div class="form-group">
-            <label for="endDate">Incident Resolved Date & Time</label>
-            <div class="time-group">
-              <input
-                type="text"
-                id="endDate"
-                placeholder="DD/MM/YYYY"
-                disabled
-              />
-              <select id="endHour" disabled></select>
-              <span>:</span>
-              <select id="endMin" disabled></select>
-            </div>
-            <label class="checkbox-inline">
-              <input type="checkbox" id="hasEnd" /> Set Resolved Time
-            </label>
           </div>
         </fieldset>
 
@@ -794,8 +826,8 @@
           </div>
 
           <div class="form-group">
-            <label for="impacted">Service Impacted</label>
-            <textarea id="impacted" placeholder="TBA">TBA</textarea>
+            <label for="impacted">Service / Job Impacted</label>
+            <textarea id="impacted" placeholder="TBA"></textarea>
           </div>
         </fieldset>
 
@@ -827,17 +859,26 @@
                 box-shadow: 0 0 0 3px rgba(21, 122, 77, 0.18);
               "
             ></span
-            ><span>LIVE</span></span
+            ><span>AUTOSAVE</span></span
           >
         </div>
-        <pre id="output"></pre>
-        <div style="margin-top: 12px">
-          <button class="btn-copy" onclick="copyText()">Copy Text</button>
+
+        <div class="output-controls">
+          <div class="template-selector-group">
+            <label for="templateMode">Pilih Format Output:</label>
+            <select id="templateMode" onchange="generateText()">
+              <option value="full" selected>
+                Incident Notification / Report
+              </option>
+              <option value="quick">Quick Incident</option>
+            </select>
+          </div>
         </div>
-        <div class="action-grid">
-          <button type="button" class="btn-save" onclick="saveToLocalStorage()">
-            💾 Simpan Data
-          </button>
+
+        <pre id="output"></pre>
+
+        <div class="action-grid" style="margin-top: 12px">
+          <button class="btn-copy" onclick="copyText()">Copy Text</button>
           <button type="button" class="btn-reset" onclick="resetToTemplate()">
             ↺ Template Awal
           </button>
@@ -863,9 +904,8 @@
       </div>
     </div>
 
-    <!-- Mobile quick-action bar -->
     <div class="mobile-copy-bar">
-      <button type="button" onclick="copyText()">Copy Text Incident</button>
+      <button type="button" onclick="copyText()">Copy Text Output</button>
     </div>
 
     <script>
@@ -877,24 +917,49 @@
 
       const chronoData = [];
 
-      // =========================================================
-      // LOCAL STORAGE
-      // =========================================================
+      function toggleNcmInput() {
+        const hasNcm = document.getElementById("hasNcm").checked;
+        const ncmGroup = document.getElementById("ncmGroup");
+        ncmGroup.style.display = hasNcm ? "block" : "none";
+        generateText();
+        saveToLocalStorage();
+      }
+
+      function toggleDeploymentInput() {
+        const hasDeployment = document.getElementById("hasDeployment").checked;
+        const deploymentGroup = document.getElementById("deploymentGroup");
+        deploymentGroup.style.display = hasDeployment ? "block" : "none";
+        generateText();
+        saveToLocalStorage();
+      }
+
+      function getLastChronoFormatted() {
+        if (chronoData.length > 0) {
+          const lastChrono = chronoData[chronoData.length - 1];
+          if (lastChrono.date && lastChrono.hour && lastChrono.min) {
+            return `[${lastChrono.date} ${lastChrono.hour}:${lastChrono.min}]`;
+          }
+        }
+        return "";
+      }
+
       function getFormData() {
         return {
           isMonthly: document.getElementById("isMonthly").checked,
+          hasNcm: document.getElementById("hasNcm").checked,
+          ncmLink: document.getElementById("ncmLink").value,
+          hasDeployment: document.getElementById("hasDeployment").checked,
+          deploymentLink: document.getElementById("deploymentLink").value,
           prefix: document.getElementById("prefix").value,
           title: document.getElementById("title").value,
           iris: document.getElementById("iris").value,
           status: document.getElementById("status").value,
           severity: document.getElementById("severity").value,
+          coordLink: document.getElementById("coordLink").value,
+          templateMode: document.getElementById("templateMode").value,
           startDate: document.getElementById("startDate").value,
           startHour: document.getElementById("startHour").value,
           startMin: document.getElementById("startMin").value,
-          endDate: document.getElementById("endDate").value,
-          endHour: document.getElementById("endHour").value,
-          endMin: document.getElementById("endMin").value,
-          hasEnd: document.getElementById("hasEnd").checked,
           rca: document.getElementById("rca").value,
           resolution: document.getElementById("resolution").value,
           impacted: document.getElementById("impacted").value,
@@ -906,7 +971,7 @@
       function saveToLocalStorage() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData()));
-          showSaveStatus("✓ Tersimpan");
+          showSaveStatus("✓ Tersimpan otomatis");
         } catch (e) {
           console.error("Gagal menyimpan Local Storage:", e);
         }
@@ -922,18 +987,30 @@
           if (typeof data.isMonthly === "boolean")
             document.getElementById("isMonthly").checked = data.isMonthly;
 
+          if (typeof data.hasNcm === "boolean") {
+            document.getElementById("hasNcm").checked = data.hasNcm;
+            toggleNcmInput();
+          }
+
+          if (typeof data.hasDeployment === "boolean") {
+            document.getElementById("hasDeployment").checked =
+              data.hasDeployment;
+            toggleDeploymentInput();
+          }
+
           const fields = [
             "prefix",
             "title",
             "iris",
             "status",
             "severity",
+            "coordLink",
+            "ncmLink",
+            "deploymentLink",
+            "templateMode",
             "startDate",
             "startHour",
             "startMin",
-            "endDate",
-            "endHour",
-            "endMin",
             "rca",
             "resolution",
             "impacted",
@@ -945,9 +1022,6 @@
             }
           });
 
-          if (typeof data.hasEnd === "boolean")
-            document.getElementById("hasEnd").checked = data.hasEnd;
-
           if (data.attendanceState) {
             Object.keys(attendanceState).forEach((team) => {
               if (data.attendanceState[team] !== undefined) {
@@ -955,7 +1029,6 @@
               }
             });
 
-            // Tim yang ditambahkan manual juga dipulihkan
             Object.keys(data.attendanceState).forEach((team) => {
               if (!attendanceState.hasOwnProperty(team)) {
                 attendanceState[team] = data.attendanceState[team];
@@ -1006,9 +1079,6 @@
         location.reload();
       }
 
-      // =========================================================
-      // ATTENDANCE
-      // =========================================================
       function renderAttendanceGrid() {
         const grid = document.getElementById("attendanceGrid");
         grid.innerHTML = "";
@@ -1059,9 +1129,6 @@
         }
       }
 
-      // =========================================================
-      // DEFAULT DATE/TIME
-      // =========================================================
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, "0");
       const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -1069,33 +1136,23 @@
       const dateStr = `${dd}/${mm}/${yyyy}`;
 
       document.getElementById("startDate").value = dateStr;
-      document.getElementById("endDate").value = dateStr;
 
       const startHour = document.getElementById("startHour");
-      const endHour = document.getElementById("endHour");
       const startMin = document.getElementById("startMin");
-      const endMin = document.getElementById("endMin");
 
       for (let i = 0; i < 24; i++) {
         const val = String(i).padStart(2, "0");
         startHour.add(new Option(val, val));
-        endHour.add(new Option(val, val));
       }
 
       for (let i = 0; i < 60; i++) {
         const val = String(i).padStart(2, "0");
         startMin.add(new Option(val, val));
-        endMin.add(new Option(val, val));
       }
 
       startHour.value = "17";
       startMin.value = "30";
-      endHour.value = String(today.getHours()).padStart(2, "0");
-      endMin.value = String(today.getMinutes()).padStart(2, "0");
 
-      // =========================================================
-      // CHRONOLOGY
-      // =========================================================
       function addChronoItem(textVal = "", customData = null) {
         const sDate = document.getElementById("startDate").value || dateStr;
         const sH = document.getElementById("startHour").value || "17";
@@ -1195,39 +1252,30 @@
         });
       }
 
-      // =========================================================
-      // GENERATE TEXT
-      // =========================================================
       function generateText() {
-        const status = document.getElementById("status").value;
-
-        const headerTitle =
-          status === "Resolved" ? "INCIDENT REPORT" : "INCIDENT NOTIFICATION";
-
-        const headerDivider = "=".repeat(headerTitle.length);
-
+        const mode = document.getElementById("templateMode").value;
         const prefix = document.getElementById("prefix").value;
         const isMonthly = document.getElementById("isMonthly").checked;
         const monthlyTag = isMonthly ? " [MTH]" : "";
         const title = document.getElementById("title").value;
-
-        const iris = document.getElementById("iris").value;
+        const iris = document.getElementById("iris").value || "TBA";
+        const status = document.getElementById("status").value;
         const severity = document.getElementById("severity").value;
+        const rca = document.getElementById("rca").value || "TBA";
+        const resolution = document.getElementById("resolution").value || "TBA";
+        const impacted = document.getElementById("impacted").value || "";
+        const coordLink = document.getElementById("coordLink").value || "";
 
-        const sDate = document.getElementById("startDate").value;
-        const sH = document.getElementById("startHour").value;
-        const sM = document.getElementById("startMin").value;
-        const startTimeFormatted = sDate ? `[${sDate} ${sH}:${sM}]` : "";
+        const hasNcm = document.getElementById("hasNcm").checked;
+        const ncmLink = document.getElementById("ncmLink").value || "";
+        const ncmFormatted = hasNcm ? `\n\nLink NCM:\n${ncmLink}` : "";
 
-        const hasEnd = document.getElementById("hasEnd").checked;
-        let endTimeFormatted = "";
-
-        if (hasEnd) {
-          const eDate = document.getElementById("endDate").value;
-          const eH = document.getElementById("endHour").value;
-          const eM = document.getElementById("endMin").value;
-          endTimeFormatted = eDate ? `[${eDate} ${eH}:${eM}]` : "";
-        }
+        const hasDeployment = document.getElementById("hasDeployment").checked;
+        const deploymentLink =
+          document.getElementById("deploymentLink").value || "";
+        const deploymentFormatted = hasDeployment
+          ? `\n\nImpacted Deployment :\n${deploymentLink}`
+          : "";
 
         const attList = [];
         Object.keys(attendanceState).forEach((team) => {
@@ -1236,21 +1284,43 @@
             attList.push(`${team} ${statusIcon}`);
           }
         });
-
         const attendanceStr = attList.join(" | ");
 
-        const rca = document.getElementById("rca").value;
-        const resolution = document.getElementById("resolution").value;
-        const impacted = document.getElementById("impacted").value;
+        let template = "";
 
-        const chronoTextArr = chronoData.map((item) => {
-          const timeTag = `[${item.date || ""} ${item.hour}:${item.min}]`;
-          return `${timeTag}\n${item.text}`;
-        });
+        if (mode === "quick") {
+          template = `*QUICK INCIDENT*
+==============
+* Incident Name : ${prefix}${monthlyTag} - ${title}
+* IRIS : ${iris}
+* Incident Status : ${status}
+* Incident Severity :${severity}
+* RCA : ${rca}
+* Service/Job Impacted : ${impacted}
+* Attendence:
+${attendanceStr}
+* Link Koordinasi : ${coordLink}${hasNcm ? `\n* Link NCM : ${ncmLink}` : ""}${hasDeployment ? `\n* Impacted Deployment : ${deploymentLink}` : ""}`;
+        } else {
+          const headerTitle =
+            status === "Resolved" ? "INCIDENT REPORT" : "INCIDENT NOTIFICATION";
+          const headerDivider = "=".repeat(headerTitle.length);
 
-        const chronologyFormatted = chronoTextArr.join("\n\n");
+          const sDate = document.getElementById("startDate").value;
+          const sH = document.getElementById("startHour").value;
+          const sM = document.getElementById("startMin").value;
+          const startTimeFormatted = sDate ? `[${sDate} ${sH}:${sM}]` : "";
 
-        const template = `${headerTitle}
+          const endTimeFormatted =
+            status === "Resolved" ? getLastChronoFormatted() : "";
+
+          const chronoTextArr = chronoData.map((item) => {
+            const timeTag = `[${item.date || ""} ${item.hour}:${item.min}]`;
+            return `${timeTag}\n${item.text}`;
+          });
+
+          const chronologyFormatted = chronoTextArr.join("\n\n");
+
+          template = `${headerTitle}
 ${headerDivider}
 Incident Name: ${prefix}${monthlyTag} - ${title}
 IRIS: ${iris}
@@ -1259,49 +1329,30 @@ Incident Severity: ${severity}
 Incident Start: ${startTimeFormatted}
 Incident Resolved: ${endTimeFormatted}
 
-Attendance:
-${attendanceStr}
-
 RCA : 
 ${rca}
-
-Resolution : 
-${resolution}
 
 Service Impacted:
 ${impacted}
 
+Resolution : 
+${resolution}
+
+Attendance:
+${attendanceStr}
+
+Link Koordinasi:
+${coordLink}${ncmFormatted}${deploymentFormatted}
+
 [Description/Chronology]
 
 ${chronologyFormatted}`;
+        }
 
         document.getElementById("output").textContent = template;
       }
 
-      // =========================================================
-      // RESOLVED DATE CONTROL
-      // =========================================================
-      function updateEndControls() {
-        const enabled = document.getElementById("hasEnd").checked;
-        document.getElementById("endDate").disabled = !enabled;
-        endHour.disabled = !enabled;
-        endMin.disabled = !enabled;
-      }
-
       document.getElementById("status").addEventListener("change", function () {
-        const hasEndCb = document.getElementById("hasEnd");
-
-        if (this.value === "Resolved") {
-          hasEndCb.checked = true;
-        }
-
-        updateEndControls();
-        generateText();
-        saveToLocalStorage();
-      });
-
-      document.getElementById("hasEnd").addEventListener("change", function () {
-        updateEndControls();
         generateText();
         saveToLocalStorage();
       });
@@ -1322,9 +1373,6 @@ ${chronologyFormatted}`;
         saveToLocalStorage();
       });
 
-      // =========================================================
-      // INIT
-      // =========================================================
       const restored = loadFromLocalStorage();
 
       renderAttendanceGrid();
@@ -1335,10 +1383,8 @@ ${chronologyFormatted}`;
         renderChronoItems();
       }
 
-      updateEndControls();
       generateText();
 
-      // Auto-save semua field
       document
         .querySelectorAll("input, select, textarea")
         .forEach((element) => {
@@ -1357,13 +1403,21 @@ ${chronologyFormatted}`;
         saveToLocalStorage();
         const data = getFormData();
         const exportData = {
-          format: "INCIDENT_NOTIFICATION_TEMPLATE",
+          format: "INCIDENT_NOTIFICATION_TEMPLATE_TXT",
           version: 1,
           exportedAt: new Date().toISOString(),
           data,
         };
-        const content = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+
+        const fileContent = `--- INCIDENT_DATA_JSON ---
+${JSON.stringify(exportData, null, 2)}
+--- END_INCIDENT_DATA_JSON ---
+
+${document.getElementById("output").textContent}`;
+
+        const blob = new Blob([fileContent], {
+          type: "text/plain;charset=utf-8",
+        });
         const title =
           (data.title || "incident")
             .replace(/[\\/:*?"<>|]/g, "")
@@ -1395,13 +1449,23 @@ ${chronologyFormatted}`;
         const reader = new FileReader();
         reader.onload = function (e) {
           try {
-            const imported = JSON.parse(e.target.result);
+            const content = e.target.result;
+            const jsonMatch = content.match(
+              /--- INCIDENT_DATA_JSON ---\n([\s\S]*?)\n--- END_INCIDENT_DATA_JSON ---/,
+            );
+            if (!jsonMatch || !jsonMatch[1]) {
+              throw new Error("Format TXT tidak valid");
+            }
+
+            const imported = JSON.parse(jsonMatch[1]);
             if (
               !imported ||
-              imported.format !== "INCIDENT_NOTIFICATION_TEMPLATE" ||
+              !imported.format.includes("INCIDENT_NOTIFICATION_TEMPLATE") ||
               !imported.data
-            )
-              throw new Error("Format tidak sesuai");
+            ) {
+              throw new Error("Format data tidak sesuai");
+            }
+
             if (
               !confirm(
                 "Import akan mengganti isi form saat ini dengan data dari file TXT. Lanjutkan?",
@@ -1414,7 +1478,7 @@ ${chronologyFormatted}`;
             location.reload();
           } catch (err) {
             alert(
-              "Import gagal. Pastikan file TXT berasal dari fitur Export TXT aplikasi ini.",
+              "Import gagal. Pastikan file .txt berasal dari fitur Export TXT aplikasi ini.",
             );
           } finally {
             event.target.value = "";
@@ -1430,7 +1494,7 @@ ${chronologyFormatted}`;
       function copyText() {
         const text = document.getElementById("output").textContent;
         navigator.clipboard.writeText(text);
-        showSaveStatus("✓ Text di-copy");
+        showSaveStatus("✓ Teks berhasil di-copy");
       }
     </script>
   </body>
